@@ -1,0 +1,335 @@
+mysql> 
+mysql> -- Author: Rusiru Thushara
+mysql> 
+mysql> -- create the database
+mysql> CREATE DATABASE pet_database;
+Query OK, 1 row affected (0.01 sec)
+
+mysql> -- change the database to use
+mysql> USE pet_database;
+Database changed
+mysql> 
+mysql> -- create the owner table
+mysql> CREATE TABLE owner (
+    ->     owner_id INT NOT NULL,
+    ->     surname VARCHAR(60) NOT NULL,
+    ->     name VARCHAR(60) NOT NULL,
+    ->     street_address VARCHAR(255) NOT NULL,
+    ->     city VARCHAR(50),
+    ->     state VARCHAR(50),
+    ->     state_full VARCHAR(50),
+    ->     zip_code INT,
+    ->     PRIMARY KEY (owner_id)
+    -> );
+Query OK, 0 rows affected (0.06 sec)
+
+mysql> 
+mysql> -- create the pet table
+mysql> CREATE TABLE pet (
+    ->     pet_id VARCHAR(20) NOT NULL,
+    ->     name VARCHAR(60) NOT NULL, 
+    ->     kind VARCHAR(60), 
+    ->     gender VARCHAR(10), 
+    ->     age INT, 
+    ->     owner_id INT NOT NULL,
+    ->     PRIMARY KEY (pet_id),
+    ->     FOREIGN KEY (owner_id) REFERENCES owner(owner_id)
+    -> );
+Query OK, 0 rows affected (0.07 sec)
+
+mysql> 
+mysql> -- create the procedure_detail table
+mysql> CREATE TABLE procedure_detail (
+    ->     procedure_type VARCHAR(50) NOT NULL,
+    ->     procedure_subcode INT NOT NULL,
+    ->     description VARCHAR(255),
+    ->     price DECIMAL(15,2),
+    ->     PRIMARY KEY (procedure_type, procedure_subcode)
+    -> );
+Query OK, 0 rows affected (0.05 sec)
+
+mysql> 
+mysql> -- create the procedure_history table
+mysql> CREATE TABLE procedure_history (
+    ->     pet_id VARCHAR(20) NOT NULL,
+    ->     date DATE NOT NULL,
+    ->     procedure_type VARCHAR(50) NOT NULL,
+    ->     procedure_subcode INT NOT NULL,
+    ->     FOREIGN KEY (pet_id) REFERENCES pet (pet_id),
+    ->     FOREIGN KEY (procedure_type, procedure_subcode) REFERENCES procedure_detail (procedure_type,procedure_subcode)
+    -> );
+Query OK, 0 rows affected (0.11 sec)
+
+mysql> 
+mysql> -- put the datafiles to the permited directory and use the corresponding path to load
+mysql> 
+mysql> -- load data to the owner table from owner.csv file
+mysql> LOAD DATA INFILE '/var/lib/mysql-files/dataset/owner.csv' 
+    -> INTO TABLE owner 
+    -> FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' 
+    -> IGNORE 1 ROWS (owner_id, name, surname, street_address, city, state, state_full, zip_code);
+Query OK, 89 rows affected (0.07 sec)
+Records: 89  Deleted: 0  Skipped: 0  Warnings: 0
+
+mysql> 
+mysql> -- load data to the pet table from pet.csv file
+mysql> LOAD DATA INFILE '/var/lib/mysql-files/dataset/pet.csv'
+    -> INTO TABLE pet
+    -> FIELDS TERMINATED BY ',' 
+    -> LINES TERMINATED BY '\n'
+    -> IGNORE 1 ROWS  (pet_id, name, kind, gender, age, owner_id);
+Query OK, 100 rows affected (0.02 sec)
+Records: 100  Deleted: 0  Skipped: 0  Warnings: 0
+
+mysql> 
+mysql> -- load data to the procedure_detail table from procedure_detail.csv
+mysql> LOAD DATA INFILE '/var/lib/mysql-files/dataset/procedure_detail.csv'
+    -> INTO TABLE procedure_detail
+    -> FIELDS TERMINATED BY ',' 
+    -> LINES TERMINATED BY '\n'
+    -> IGNORE 1 ROWS  (procedure_type, procedure_subcode, description, price);
+Query OK, 41 rows affected (0.02 sec)
+Records: 41  Deleted: 0  Skipped: 0  Warnings: 0
+
+mysql> 
+mysql> -- load data to the procedure_history table from procedure_history.csv
+mysql> LOAD DATA INFILE '/var/lib/mysql-files/dataset/procedure_history.csv'
+    -> INTO TABLE procedure_history
+    -> FIELDS TERMINATED BY ',' 
+    -> LINES TERMINATED BY '\n'
+    -> IGNORE 1 ROWS  (pet_id, date, procedure_type, procedure_subcode);
+Query OK, 2284 rows affected (0.32 sec)
+Records: 2284  Deleted: 0  Skipped: 0  Warnings: 0
+
+mysql> 
+mysql> -- Select all procedure types where the price is above 150
+mysql> SELECT procedure_type, price 
+    -> FROM procedure_detail 
+    -> WHERE price > 150;
++-------------------+--------+
+| procedure_type    | price  |
++-------------------+--------+
+| GENERAL SURGERIES | 350.00 |
+| GENERAL SURGERIES | 450.00 |
+| GENERAL SURGERIES | 390.00 |
+| GENERAL SURGERIES | 175.00 |
+| GENERAL SURGERIES | 375.00 |
+| GENERAL SURGERIES | 195.00 |
+| GENERAL SURGERIES | 775.00 |
+| GENERAL SURGERIES | 500.00 |
+| GENERAL SURGERIES | 175.00 |
+| GENERAL SURGERIES | 425.00 |
+| GENERAL SURGERIES | 375.00 |
+| GENERAL SURGERIES | 450.00 |
+| GENERAL SURGERIES | 570.00 |
+| GENERAL SURGERIES | 250.00 |
+| ORTHOPEDIC        | 400.00 |
+| ORTHOPEDIC        | 420.00 |
+| ORTHOPEDIC        | 305.00 |
+| ORTHOPEDIC        | 325.00 |
++-------------------+--------+
+18 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- Find all owners who have a parrot as a pet
+mysql> SELECT owner.name, surname 
+    -> FROM owner, pet 
+    -> WHERE pet.owner_id = owner.owner_id AND pet.kind = "parrot";
++----------+-----------+
+| name     | surname   |
++----------+-----------+
+| William  | Tea       |
+| Robert   | Partridge |
+| Marie    | Floyd     |
+| Tony     | Long      |
+| Anne     | Hudson    |
+| Mario    | Riddle    |
+| Jeffrey  | Moore     |
+| Sarah    | Canada    |
+| Jackie   | Hatmaker  |
+| Paula    | Browning  |
+| Florence | Nolen     |
+| Carmen   | Ingram    |
++----------+-----------+
+12 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- Find the number of owners who have the same postal code (i.e 10 from 49503, 1 from 48423)
+mysql> SELECT owner.zip_code, COUNT(owner.owner_id) AS 'NUMBER OF OWNERS' 
+    -> FROM owner GROUP BY owner.zip_code;
++----------+------------------+
+| zip_code | NUMBER OF OWNERS |
++----------+------------------+
+|    48034 |                4 |
+|    48154 |                1 |
+|    49612 |                1 |
+|    49316 |                1 |
+|    48185 |                1 |
+|    48075 |               11 |
+|    48933 |                5 |
+|    48335 |                1 |
+|    49333 |                1 |
+|    48226 |                1 |
+|    48342 |                3 |
+|    48548 |                2 |
+|    49007 |                2 |
+|    49254 |                1 |
+|    49503 |               10 |
+|    48423 |                1 |
+|    48093 |                1 |
+|    49855 |                4 |
+|    48085 |                1 |
+|    48302 |                4 |
+|    48607 |                3 |
+|    49684 |                1 |
+|    48911 |                1 |
+|    49412 |                1 |
+|    48219 |                4 |
+|    48221 |                1 |
+|    48336 |                1 |
+|    48655 |                1 |
+|    48170 |                1 |
+|    48015 |                1 |
+|    48203 |                1 |
+|    49106 |                1 |
+|    49912 |                1 |
+|    48306 |                1 |
+|    49426 |                1 |
+|    48104 |                2 |
+|    48723 |                1 |
+|    48837 |                1 |
+|    49415 |                1 |
+|    48146 |                1 |
+|    48823 |                2 |
+|    48150 |                1 |
+|    49077 |                1 |
+|    48066 |                1 |
+|    48184 |                1 |
+|    48227 |                1 |
++----------+------------------+
+46 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- Find all pets having gone through a procedure during the month of February 2016
+mysql> SELECT DISTINCT pet.name, pet.pet_id
+    -> FROM pet, procedure_history
+    -> WHERE pet.pet_id = procedure_history.pet_id
+    -> AND EXTRACT(YEAR_MONTH FROM date) = 201602;
++-------------+---------+
+| name        | pet_id  |
++-------------+---------+
+| Danger      | F2-3235 |
+| Taz         | G0-7675 |
+| Sojourner   | G0-8531 |
+| Danger      | G4-8096 |
+| Jake        | G6-6501 |
+| Kashi       | G9-0817 |
+| Antigone    | H2-8586 |
+| Lily        | H8-1429 |
+| Bandit      | H8-8856 |
+| Dior        | I2-7926 |
+| Cookie      | I5-4893 |
+| Biscuit     | I6-9459 |
+| Angel       | I7-9550 |
+| Crockett    | J0-7893 |
+| Bruce       | J1-6366 |
+| Heisenberg  | J2-3320 |
+| Dexter      | J2-4382 |
+| Blackie     | J6-8562 |
+| Bonaparte   | J8-7429 |
+| Bruce       | K0-8177 |
+| Natacha     | K4-5012 |
+| Cookie      | L0-6660 |
+| Collette    | L2-1834 |
+| Newcastle   | L4-2594 |
+| Bruce       | L4-4030 |
+| Rumba       | L4-4205 |
+| Bright      | L4-6292 |
+| Houdini     | L4-9973 |
+| Rumba       | L8-0046 |
+| Bright      | L8-9022 |
+| Simba       | M0-2904 |
+| Jeep        | M4-9675 |
+| Cookie      | M8-7852 |
+| Swiffer     | N0-9539 |
+| Biscuit     | N6-7350 |
+| Enyo        | N7-6805 |
+| Tiger       | N8-0553 |
+| Dexter      | O1-7229 |
+| Candy       | O3-1895 |
+| Bright      | O5-2472 |
+| Biscuit     | O6-3123 |
+| Bandit      | O8-2501 |
+| Lily        | P0-1725 |
+| Tiger       | P1-2578 |
+| Cuddles     | P2-7342 |
+| Rumba       | P7-2443 |
+| Cuddles     | P9-3625 |
+| Cookie      | P9-6519 |
+| Roomba      | Q0-2001 |
+| Oakley      | Q0-3593 |
+| Bright      | Q0-8904 |
+| Thatcher    | Q2-3642 |
+| Candy       | Q4-9479 |
+| Lakshmi     | Q8-0954 |
+| Peanut      | Q8-3145 |
+| Danger      | Q8-8753 |
+| Scout       | Q9-1565 |
+| Keller      | R3-7551 |
+| Biscuit     | R4-6131 |
+| Cookie      | R7-4835 |
+| Biscuit     | S4-0789 |
+| Draper      | S4-2254 |
+| Pip         | S4-4013 |
+| Scooter     | S4-9578 |
+| Taz         | S5-5938 |
+| Humbert     | T0-3277 |
+| Biscuit     | T0-5705 |
+| Stowe       | T2-2142 |
+| Daisy       | T8-1754 |
+| Ebenezer    | U0-5987 |
+| Cuddles     | U2-4205 |
+| Daisy       | U2-7207 |
+| Tiger       | U4-5113 |
+| Biscuit     | U4-6674 |
+| Scout       | U4-9376 |
+| Blackie     | U6-4890 |
+| Biscuit     | U8-6473 |
+| Goethe      | V2-4634 |
+| Sarosh      | V4-6172 |
+| Jake        | V5-2342 |
+| Daisy       | V7-6771 |
+| Daisy       | W7-6372 |
+| Simba       | W8-5750 |
+| Lexie       | W9-8307 |
+| Vuitton     | X0-8765 |
+| Brandy      | X6-4876 |
+| Maripol     | X7-2632 |
+| Schwarzkopf | X8-8611 |
+| Danger      | X8-9212 |
+| Simba       | Z4-4045 |
+| Priya       | Z4-5652 |
+| Simba       | Z6-3226 |
+| Scooter     | Z8-4419 |
++-------------+---------+
+93 rows in set (0.01 sec)
+
+mysql> 
+mysql> -- Find the total cost of procedures incurred during the month of March of owners from the postal code 49503
+mysql> SELECT SUM(procedure_detail.price)
+    -> FROM procedure_detail INNER JOIN procedure_history 
+    -> ON procedure_detail.procedure_type = procedure_history.procedure_type
+    -> AND procedure_detail.procedure_subcode = procedure_history.procedure_subcode
+    -> WHERE procedure_history.pet_id IN 
+    -> (
+    ->     SELECT pet.pet_id FROM pet, owner  
+    ->     WHERE pet.owner_id = owner.owner_id AND owner.zip_code = 49503 
+    -> ) AND  MONTH(date) = 03;
++-----------------------------+
+| SUM(procedure_detail.price) |
++-----------------------------+
+|                      928.00 |
++-----------------------------+
+1 row in set (0.01 sec)
+
+mysql> 
