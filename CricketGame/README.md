@@ -6,7 +6,9 @@ To open the terminal
 > ctrl + alt + T 
 
 To install pip on linux
+
 > sudo apt update
+
 > sudo apt install python3-pip
 
 To install requirements
@@ -19,9 +21,13 @@ Follow the instructions as requested.
 
 #### Example Game Flow
 
+```
 Enter team 1 name : 
+
 Sri Lanka
+
 Enter team 2 name : 
+
 India
 
 Team Sri Lanka won the toss.
@@ -58,5 +64,9 @@ Score Board : (overs/balls): (0/2) (score/wickets): 8/0
 Team Sri Lanka has won the match by 12 runs.
 
 *******************************
+
+```
+
+
 
 
