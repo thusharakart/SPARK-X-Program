@@ -1,5 +1,4 @@
-import sys
-sys.path.append("..")
+
 from Models.player import Player
 from typing import Final
 
